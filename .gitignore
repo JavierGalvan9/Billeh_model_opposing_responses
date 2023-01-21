@@ -1,0 +1,19 @@
+GLIF_network
+Topological_analysis_5000
+Topological_analysis_230924
+Predictive_coding_experiments/Simulation_results
+Predictive_coding_experiments/Out
+Predictive_coding_experiments/Error
+Predictive_coding_experiments/Old code
+Predictive_coding_experiments/New preprocessing
+Predictive_coding_experiments/Images_general
+Predictive_coding_experiments/Deleter.ipynb
+Predictive_coding_experiments/various.ipynb
+Predictive_coding_experiments/__pycache__
+Predictive_coding_experiments/*.sh
+Saleem_experiments(to be correct)
+network_topology.sh
+billeh_model_utils/__pycache__
+billeh_model_utils/.cache/
+general_utils/__pycache__
+Predictive_coding_experiments/.*

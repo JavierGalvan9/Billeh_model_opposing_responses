@@ -1,0 +1,13 @@
+The order in which the scripts must be executed is:
+
+**1) drifting_gratings.py # Makes the simulation of the network and stores the data
+**2) network_topology.py # Analyzes the structural connectivity of the network
+*_2) neurons_dynamic_classification.py # Obtains the variables variations and dynamically classifies neurons
+*_3) dynamic_populations_comparison.py # Represents the average of a certain magnitude (e.g. input current) for different neuronal populations
+*_3) neurons_dynamic_analysis.py # Analyze the dynamic synaptic weights of the neurons types
+*_3) synapses_analysis.py # Analyze the structural characteristics of dVf, hVf and unc neurons
+*_3) stimulus_classification_comparison.py # Compare how the dynamic classification changes with different stimulus
+*_3) feature_selectivity_analysis.py # Analyze the orientation and frequency effect on the classification
+*_3) classes_spatial_distribution_analysis.py # Analyze the K ripley function and radius and height distribution of the neurons from the different classes
+**4) full_field_flash.py
+*-4) perturbation_responsive_neurons_analysis.py
