@@ -47,6 +47,7 @@ class StimulusClassificationComparison:
             dataset = f['Data']
             self.sim_metadata.update(dataset.attrs)
         self.data_dir = self.sim_metadata['data_dir']
+        self.data_dir = '/home/jgalvan/Desktop/Neurocoding/V1_Billeh_model/GLIF_network'
         
     # @profile    
     def __call__(self):

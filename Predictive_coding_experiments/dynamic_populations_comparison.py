@@ -40,10 +40,12 @@ class ClassificationComparison:
         os.makedirs(self.comparison_path, exist_ok=True)
         # Load the simulation results
         self.full_data_path = os.path.join(self.full_path, 'Data', 'simulation_data.hdf5')
+        
         self.variables = ['input_current']
         self.sim_data, self.sim_metadata, self.n_simulations = other_billeh_utils.load_simulation_results_hdf5(self.full_data_path, n_simulations=self.n_simulations_init, 
                                                                                                                skip_first_simulation=self.skip_first_simulation, variables=self.variables)
         self.data_dir = self.sim_metadata['data_dir']
+        # self.data_dir = '/home/jgalvan/Desktop/Neurocoding/V1_Billeh_model/GLIF_network'
     
     # @profile    
     def __call__(self):

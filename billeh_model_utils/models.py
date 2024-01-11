@@ -604,6 +604,12 @@ def create_model(network, input_population, bkg_weights, seq_len=100, n_input=10
         cell.input_indices, cell.input_weight_values, cell.input_dense_shape,
         cell.bkg_weights, lr_scale=lr_scale, dtype=dtype, name='input_layer')(x)
 
+    print(x.shape)
+    print(rnn_inputs.shape)
+    print(state_input.shape)
+
+    print("Sparse layer created")
+
     rnn_inputs = tf.cast(rnn_inputs, dtype)
     full_inputs = tf.concat((rnn_inputs, state_input), -1)
 

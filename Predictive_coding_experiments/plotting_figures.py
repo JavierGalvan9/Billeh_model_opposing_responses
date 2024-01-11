@@ -1055,9 +1055,9 @@ def plot_average_population_comparison(input_current_1, input_current_2,
     plt.axvline(stimuli_init_time, linestyle='dashed', color='gray', linewidth=1, zorder=10)
     plt.axvline(stimuli_end_time, linestyle='dashed', color='gray', linewidth=1, zorder=10)
     plt.hlines(0, 0, simulation_length, color='k', linewidths=1,zorder=10)
-    plt.ylabel('Input current response [pA]')
-    plt.xlabel('Time [ms]')
-    plt.tick_params(axis='both', labelsize=10)
+    plt.ylabel('Input current response [pA]', fontsize=12)
+    plt.xlabel('Time [ms]', fontsize=12)
+    plt.tick_params(axis='both', labelsize=12)
     leg = plt.legend()
     for text, color in zip(leg.get_texts(), [color1, color2]):
         plt.setp(text, color=color)
@@ -1109,8 +1109,8 @@ def currents_comparison_figure(current_variables, frequencies, reverses, selecte
     heatmaps_ax = grid[0]
     drifting_grating_ax = grid[1]    
     # Share y axis in the stimulus illustrations
-    for idx in range(1, len(drifting_grating_ax)):
-        drifting_grating_ax[idx].get_shared_y_axes().join(drifting_grating_ax[idx], drifting_grating_ax[0])
+    # for idx in range(1, len(drifting_grating_ax)):
+    #     drifting_grating_ax[idx].get_shared_y_axes().join(drifting_grating_ax[idx], drifting_grating_ax[0])
 
     drifting_grating_ax[-1].set_visible(False)    
     selected_df = selected_df.sort_values(by=['heatmap_neurons'])
@@ -1300,14 +1300,18 @@ def new_degree_distributions_classes_comparison_plot(selected_df, degree_key, we
     selected_df = selected_df.loc[selected_df['class'] != 'unclassified']
     fig, axs = plt.subplots(1,2, figsize=(8, 4), sharex='col', sharey=True)
     my_pal = {"dVf": "#33ABA2", "hVf": "#F06233"}
-    sns.histplot(data=selected_df, x=degree_key, hue='class', bins=50, stat='probability',
+    deg_ax = sns.histplot(data=selected_df, x=degree_key, hue='class', bins=50, stat='probability',
                  palette=my_pal, common_norm=False, legend=True, ax=axs[0])
-    sns.histplot(data=selected_df, x=weighted_degree_key, hue='class', bins=50, stat='probability', 
+    weigh_ax = sns.histplot(data=selected_df, x=weighted_degree_key, hue='class', bins=50, stat='probability', 
                  palette=my_pal, common_norm=False, legend=True, ax=axs[1])
     # axs[0].legend(loc='upper right')
     axs[0].set_xlabel('Degree', fontsize=14)
     axs[0].set_ylabel('Probability', fontsize=14)
     axs[0].tick_params(axis='both', labelsize=12)
+    # for legend text
+    plt.setp(deg_ax.get_legend().get_texts(), fontsize='14')  
+    deg_ax.legend(fontsize=14)
+
     axs[1].set_xlabel('Weight [pA]', fontsize=14)
     
     axs[1].set_ylabel('', fontsize=14)
@@ -1346,6 +1350,13 @@ def degree_distributions_classes_comparison_plot(selected_df, degree_key, weight
     
 def classes_interconnection_matrix(selected_df, recurrent_network_pop, neurons_per_class, ax, feature='connection_probability'):
     neuron_classes = set(selected_df['class'])
+    # isolate dvf and hVf neurons
+    recurrent_network_pop = recurrent_network_pop.loc[(recurrent_network_pop['Target type']=='dVf')|
+                                                    (recurrent_network_pop['Target type']=='hVf')]
+    # Isolate the local recurrent network
+    recurrent_network_pop = recurrent_network_pop.loc[(recurrent_network_pop['Source type']=='dVf')|
+                                                    (recurrent_network_pop['Source type']=='hVf')]
+
     # print(recurrent_network_pop)
     if feature == 'connection_probability':
         label = 'Probability of connection (%)'
@@ -1367,19 +1378,25 @@ def classes_interconnection_matrix(selected_df, recurrent_network_pop, neurons_p
         for neu_class in neuron_classes:    
             connection_matrix.loc[connection_matrix['Target type']==neu_class, 'Weight']/=neurons_per_class[neu_class]    
 
-    connection_matrix = connection_matrix['Weight'].to_numpy()
-    connection_matrix[1], connection_matrix[2] = connection_matrix[2], connection_matrix[1]
-    connection_matrix[6], connection_matrix[3] = connection_matrix[3], connection_matrix[6]
-    connection_matrix[8], connection_matrix[4] = connection_matrix[4], connection_matrix[8]
-    connection_matrix[7], connection_matrix[5] = connection_matrix[5], connection_matrix[7]
+    connection_matrix = connection_matrix['Weight'].to_numpy().copy()
+    # connection_matrix[1], connection_matrix[2] = connection_matrix[2], connection_matrix[1]
+    # connection_matrix[6], connection_matrix[3] = connection_matrix[3], connection_matrix[6]
+    # connection_matrix[8], connection_matrix[4] = connection_matrix[4], connection_matrix[8]
+    # connection_matrix[7], connection_matrix[5] = connection_matrix[5], connection_matrix[7]
     
-    connection_matrix = connection_matrix.reshape((3,3))
+    # connection_matrix = connection_matrix.reshape((3,3))
+    connection_matrix = connection_matrix.reshape((2,2))
     #m/=np.sum(m, axis=0)
     cm_df = pd.DataFrame(connection_matrix,
-                         index = ['dVf', 'unc', 'hVf'], 
-                         columns = ['dVf', 'unc', 'hVf'])
+                         index = ['dVf', 'hVf'], 
+                         columns = ['dVf', 'hVf'])
+
+    # cm_df = pd.DataFrame(connection_matrix,
+    #                      index = ['dVf', 'unc', 'hVf'], 
+    #                      columns = ['dVf', 'unc', 'hVf'])
+
     sns.heatmap(cm_df, ax=ax, annot=True, fmt=".2f", yticklabels=True, cmap='binary', annot_kws={"fontsize":10},
-                cbar_kws={'format': '%.2f'})
+                cbar_kws={'format': '%.2f', 'ticks': np.linspace(cm_df.values.min(), cm_df.values.max(), 5)})
     cax = plt.gcf().axes[-1]
     cax.tick_params(labelsize=10)
     ax.set_ylabel('Target neuron', fontweight='bold', fontsize=12)
@@ -1407,28 +1424,58 @@ def classes_connectivity_figure(recurrent_network_pop, weight=False, path=''):
     df2 = hvf_s[['Source type', 'Weight']].assign(Trial='hVf')
     df2.columns = ['Source type', 'Weight', 'Class']
     cdf = pd.concat([df1, df2])  
-    true_order = ['i1Htr3a', 'dVf', 'hVf', 'unc', 
+    true_order = ['i1Htr3a', 'dVf', 'hVf', 'unclassified', 
                       'i23Htr3a', 'i23Pvalb', 'i23Sst',
                       'e4', 'i4Htr3a', 'i4Pvalb', 'i4Sst', 
                       'e5', 'i5Htr3a', 'i5Pvalb', 'i5Sst',
                       'e6', 'i6Htr3a', 'i6Pvalb', 'i6Sst']
+    source_types = [source for source in true_order if source in set(cdf['Source type'])]
             
+    # Plotting
     fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(7, 4))
+    
+    if weight:
+        axes.set_yscale('symlog')
+
+    # Define palette and boxplot configuration  
     my_pal = {"dVf": "#33ABA2", "hVf": "#F06233"}
-    sns.boxplot(y='Weight', x='Source type',
-                data=cdf, 
-                hue='Class',
-                order=true_order,
-                ax=axes,
-                showfliers = False,#fliersize=2,
-                palette=my_pal)
-    axes.set_ylabel(y_label, fontsize=12)
+    hue_plot_params = {
+        'data': cdf,
+        'x': 'Source type',
+        'y': 'Weight',
+        "order": source_types,
+        "hue": "Class",
+        "showfliers": False,
+        "hue_order": ['dVf', 'hVf'],
+        "palette": my_pal
+    }
+    
+    sns.boxplot(ax=axes, **hue_plot_params)
+
+    # Add Welch t-test annotations
+    pairs = [((source_type, 'dVf'), (source_type, 'hVf')) for source_type in source_types]
+    annotator = Annotator(axes, pairs, **hue_plot_params)
+    annotator.configure(test='t-test_welch', loc='inside').apply_and_annotate()  # text_format is still simple
+
+    axes.set_ylabel(y_label, fontsize=14)
     axes.xaxis.label.set_visible(False)
-    axes.legend().set_visible(True)
+    axes.legend(loc='upper right', fontsize=14).set_visible(True)
     plt.setp(axes.get_xticklabels(), rotation=90)
-    axes.tick_params(axis='both',          
+    axes.tick_params(axis='x',          
                      which='both',     
-                     labelsize=10) 
+                     labelsize=14) 
+    axes.tick_params(axis='y',          
+                     which='both',     
+                     labelsize=12) 
+    
+    # If plotting synaptic weight, add a line at 0 pA and shades for excitatory and inhibitory regions
+    if weight:
+        x_min, x_max = axes.get_xlim()
+        y_min, y_max = axes.get_ylim()
+        axes.fill_between(x=[x_min, x_max], y1=0, y2=y_max, color='lightcoral', alpha=0.2, zorder=0)
+        axes.fill_between(x=[x_min, x_max], y1=0, y2=y_min, color='lightblue', alpha=0.2, zorder=0)
+        axes.axhline(y=0, color='black', linestyle='-', linewidth=1, zorder=0)
+
     plt.tight_layout()
     fig.savefig(os.path.join(path, fn), dpi=300, transparent=True)
     plt.close(fig)

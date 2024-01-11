@@ -59,6 +59,7 @@ class DynamicNeuronAnalysis:
         self.sim_data, self.sim_metadata, self.n_simulations = other_billeh_utils.load_simulation_results_hdf5(self.full_data_path, n_simulations=self.n_simulations_init, 
                                                                                                                skip_first_simulation=self.skip_first_simulation, variables=self.variables)
         self.data_dir = self.sim_metadata['data_dir']
+        self.data_dir = '/home/jgalvan/Desktop/Neurocoding/V1_Billeh_model/GLIF_network'
         
     def __call__(self):
         # Load the model network
@@ -122,10 +123,23 @@ class DynamicNeuronAnalysis:
             pop_names = [neuron_pop]
             dynamic_df = self.static_dynamic_analysis(pop_names, neuron_pop, save_results_df=False)
             self.static_weights_histogram(axes1[idx], dynamic_df)
-            self.dynamic_weights_histogram(axes2[idx], dynamic_df)  
+            self.dynamic_weights_histogram(axes2[idx], dynamic_df, ordering='laminar')  
             if idx!=0:
                 axes1[idx].yaxis.label.set_visible(False)
                 axes2[idx].yaxis.label.set_visible(False)
+
+        for ax in axes2:
+            # Shade positive and negative weights areas
+            x_min, x_max = ax.get_xlim()
+            y_min, y_max = ax.get_ylim()
+            # y_min = min(cdf['influence'])
+            # y_max = max(cdf['influence'])
+            ax.fill_between(x=[x_min, x_max], y1=0, y2=y_max, color='lightcoral', alpha=0.2, zorder=0)
+            ax.fill_between(x=[x_min, x_max], y1=0, y2=y_min, color='lightblue', alpha=0.2, zorder=0)
+
+            ax.set_xlim(x_min, x_max)
+            ax.set_ylim(y_min, y_max)
+
         # Save both figures        
         path = os.path.join(self.full_path, 'Topological images', 'Comparison dynamic analysis', self.compare_neurons)
         os.makedirs(path, exist_ok=True)
@@ -195,36 +209,74 @@ class DynamicNeuronAnalysis:
         df2 = whole_network_pop[['Source type', 'stim_influence']].assign(Trial='Drifting gratings')
         df2.columns = ['Source type', 'influence', 'Period']
         cdf = pd.concat([df1, df2])
-        
+       
         if ordering == 'laminar':
             true_order = ['LGN unit', 'i1Htr3a', 'dVf', 'hVf', 'unclassified', 
                           'i23Htr3a', 'i23Pvalb', 'i23Sst',
                           'e4', 'i4Htr3a', 'i4Pvalb', 'i4Sst', 
                           'e5', 'i5Htr3a', 'i5Pvalb', 'i5Sst',
                           'e6', 'i6Htr3a', 'i6Pvalb', 'i6Sst', 'Total']
+            
+        elif ordering == 'relevant':
+            drifting_cdf = cdf.loc[cdf['Period']=='Drifting gratings']
+            drifting_cdf = drifting_cdf.loc[drifting_cdf['Source type']!='Total']
+            drifting_cdf['influence'] = drifting_cdf['influence'].abs()
+            drifting_cdf = drifting_cdf.groupby('Source type')['influence'].sum()
+            drifting_cdf = drifting_cdf.sort_values(ascending=False)
+            drifting_cdf = drifting_cdf.cumsum()/drifting_cdf.sum()
+            # select the ones which explain 95% of the total influence
+            drifting_cdf = drifting_cdf[drifting_cdf<0.95]
+            # isolate this source types from cdf dataframe
+            drifting_cdf_index = drifting_cdf.index.values.tolist()
+            drifting_cdf_index.append('Total')  
+            cdf = cdf.loc[cdf['Source type'].isin(drifting_cdf_index)]
+
+            true_order = ['LGN unit', 'i1Htr3a', 'dVf', 'hVf', 'unclassified', 
+                'i23Htr3a', 'i23Pvalb', 'i23Sst',
+                'e4', 'i4Htr3a', 'i4Pvalb', 'i4Sst', 
+                'e5', 'i5Htr3a', 'i5Pvalb', 'i5Sst',
+                'e6', 'i6Htr3a', 'i6Pvalb', 'i6Sst', 'Total']
+
+            # from this list sets , select the ones contained in drifting_cdf source types
+            true_order = [x for x in true_order if x in drifting_cdf_index]
 
         # elif ordering == 'max_variation':
         #     sel_rec['influence abs_change'] = np.abs(sel_rec['stim_influence'] - sel_rec['pre_influence'])
         #     selection = sel_rec.loc[significative_pops]
         #     selection.sort_values(by=['influence abs_change'], inplace=True)
 
+        static_color = '#CCCCCC'  # Calm and subdued color
+        moving_color = 'mediumseagreen'     # Vibrant and energetic color
+
+        # Create a custom Seaborn palette with these colors
+        custom_palette = [static_color, moving_color]
+        # original_palette = 'CMRmap_r'
         sns.boxplot(y='influence', x='Source type',
                     hue = 'Period',
                     data=cdf, 
                     order=true_order,
                     ax=axes,
                     showfliers = False,#fliersize=2,
-                    palette="CMRmap_r")
+                    palette=custom_palette)
+        
+        axes.axhline(y=0, color='black', linestyle='-', linewidth=1, zorder=0)
+
         axes.get_xticklabels()[-1].set_weight("bold")
         axes.set_ylabel(r'$W^{eff} ~~ [pA/ms]$', fontsize=14)
         axes.xaxis.label.set_visible(False)
-        axes.legend(loc='upper left').set_visible(True)
+        # Modify the legend labels
+        handles, labels = axes.get_legend_handles_labels()
+        # Change the label for the static gratings
+        labels[0] = 'Static gratings'
+        axes.legend(handles, labels, loc='upper left').set_visible(True)
         if label is not None:
             axes.set_title(label, fontsize=14)
         plt.setp(axes.get_xticklabels(), rotation=90)
         axes.tick_params(axis='both',          
                          which='both',     
                          labelsize=12) 
+        # axes.set_xlim(x_min, x_max)
+        # axes.set_ylim(y_min, y_max)
 
     def static_dynamic_analysis(self, pop_names, population_label, save_results_df=False, path=''):
         # Determine the dynamic weights for the chosen neuron population
@@ -260,7 +312,7 @@ class DynamicNeuronAnalysis:
         plt.close(fig)
         # Save the dynamic weights distribution
         fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(7, 4))
-        self.dynamic_weights_histogram(axes, whole_network_pop)
+        self.dynamic_weights_histogram(axes, whole_network_pop, ordering='relevant')
         fig.tight_layout()
         fig.savefig(os.path.join(images_path, 'dynamic_histogram.png'), dpi=300, transparent=True)
         plt.close(fig)
