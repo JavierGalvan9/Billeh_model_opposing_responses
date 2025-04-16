@@ -181,7 +181,7 @@ When contributing to this repository, please ensure that:
 
 If you use this code in your research, please cite:
 
-> Galván Fraile, J., Scherr, F., Ramasco, J. J., Arkhipov, A., Maass, W., & Mirasso, C. R. (2022). Modeling circuit mechanisms of opposing cortical responses to visual flow perturbations.
+> Galván Fraile, J., Scherr, F., Ramasco, J. J., Arkhipov, A., Maass, W., & Mirasso, C. R. (2024). Modeling circuit mechanisms of opposing cortical responses to visual flow perturbations. PLOS Computational Biology, 20(3), e1011921.
 
 <!-- ## License
 
